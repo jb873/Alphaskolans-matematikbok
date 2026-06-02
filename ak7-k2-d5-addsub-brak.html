@@ -869,6 +869,24 @@ footer span{font-family:var(--cinzel);font-size:11px;letter-spacing:.1em}
   border-style:dashed;color:var(--ink-soft);
 }
 .brak-kladd:focus{box-shadow:0 0 0 3px rgba(154,114,40,.15);}
+.brak-kladdfrak{margin:0 4px;vertical-align:middle;}
+.brak-kladdfrak .ovn-brak-strecket{height:2px;background:var(--ink);width:100%;min-width:48px;margin:2px 0;}
+.brak-kladd-cell{width:48px;text-align:center;font-size:16px;border:1.5px dashed var(--gold-lt,#c49a40);border-radius:5px;background:rgba(154,114,40,.05);padding:2px 0;color:var(--ink-soft);}
+.brak-kladd-cell:focus{outline:none;box-shadow:0 0 0 3px rgba(154,114,40,.15);background:#fff;}
+.brak-femled{display:flex;align-items:center;flex-wrap:wrap;row-gap:10px;gap:0;}
+.brak-femled .femled-grp{display:inline-flex;align-items:center;}
+.brak-femled .femled-eq{margin:0 7px;color:var(--ink-faint);font-size:19px;}
+.brak-femled .ovn-brak{margin:0 1px;}
+.brak-femled .ovn-brak-strecket{min-width:22px;}
+.brak-femled .ovn-text{margin:0 3px !important;}
+.brak-stegfrak .ovn-brak-taljare,.brak-stegfrak .ovn-brak-namnare{padding:1px 0;}
+.brak-steg-cell{width:38px;height:28px;text-align:center;font-size:16px;border:2px dashed var(--gold-lt,#c49a40);border-radius:5px;background:rgba(154,114,40,.05);color:var(--ink-soft);padding:0;}
+.brak-steg-cell.smal{width:26px;font-size:14px;}
+.brak-steg-cell:focus{outline:none;box-shadow:0 0 0 3px rgba(154,114,40,.15);background:#fff;}
+.brak-steg-cell.correct{border-color:#16a34a;border-style:solid;background:rgba(22,163,74,.08);color:#15803d;}
+.brak-steg-cell.wrong{border-color:#dc2626;border-style:solid;background:rgba(220,38,38,.08);color:#b91c1c;}
+.brak-prodfrak .ovn-brak-taljare,.brak-prodfrak .ovn-brak-namnare{display:inline-flex;align-items:center;gap:2px;}
+.brak-prodfrak .prod-gng{font-size:13px;color:var(--ink-faint);}
 .brak-heltal{width:64px;}
 </style>
 
@@ -1007,20 +1025,46 @@ function mixedText(o){
 // Räkneuttryck med svar i bråkform (svar alltid i enklaste form)
 function radBerakna(t1, n1, op, t2, n2){
   var v = frVarde(t1, n1, op, t2, n2);
-  return {typ:'brakSvar', vanster: fracSpan(t1,n1) + opSpan(op) + fracSpan(t2,n2),
-          likhet:true, svar: kanonisk(v.t, v.n)};
+  var rad = {typ:'brakSvar', vanster: fracSpan(t1,n1) + opSpan(op) + fracSpan(t2,n2),
+          likhet:true, svar: kanonisk(v.t, v.n), olikaNamn: (n1 !== n2)};
+  if(n1 !== n2){
+    // Steg-data för femledad uppställning (förläng → samma nämnare → lägg ihop → svar)
+    var L = n1 * n2 / gcd(n1, n2);   // minsta gemensamma nämnare
+    var f1 = L / n1, f2 = L / n2;     // förlängningsfaktorer
+    var nt1 = t1 * f1, nt2 = t2 * f2; // nya täljare
+    var komb = (op === '+') ? (nt1 + nt2) : (nt1 - nt2);
+    rad.steg = {
+      t1:t1, n1:n1, op:op, t2:t2, n2:n2,
+      f1:f1, f2:f2,                       // förläng: (t1·f1)/(n1·f1)
+      L:L, nt1:nt1, nt2:nt2,              // samma nämnare: nt1/L op nt2/L
+      kombT:komb, kombN:L,                // lägg ihop: komb/L
+      svar: kanonisk(komb, L)            // svar (enklaste/blandad form)
+    };
+  }
+  return rad;
 }
 // Flerterms-uttryck (2 eller 3 termer), svar i enklaste form.
 // termer: [{t,n}, {op:'+'/'-', t, n}, ...]
 function radTermer(termer){
   var t = termer[0].t, n = termer[0].n;
   var vanster = fracSpan(t, n);
+  var olika = false;
   for(var i = 1; i < termer.length; i++){
     vanster += opSpan(termer[i].op) + fracSpan(termer[i].t, termer[i].n);
+    if(termer[i].n !== termer[0].n) olika = true;
     var v = frVarde(t, n, termer[i].op, termer[i].t, termer[i].n);
     t = v.t; n = v.n;
   }
-  return {typ:'brakSvar', vanster: vanster, likhet:true, svar: kanonisk(t, n)};
+  var rad = {typ:'brakSvar', vanster: vanster, likhet:true, svar: kanonisk(t, n), olikaNamn: olika};
+  // Femledad uppställning bara för tvåtermsuttryck med olika nämnare
+  if(termer.length === 2 && termer[0].n !== termer[1].n){
+    var t1=termer[0].t, n1=termer[0].n, op=termer[1].op, t2=termer[1].t, n2=termer[1].n;
+    var L = n1 * n2 / gcd(n1, n2);
+    var f1 = L / n1, f2 = L / n2, nt1 = t1*f1, nt2 = t2*f2;
+    var komb = (op === '+') ? (nt1 + nt2) : (nt1 - nt2);
+    rad.steg = {t1:t1,n1:n1,op:op,t2:t2,n2:n2,f1:f1,f2:f2,L:L,nt1:nt1,nt2:nt2,kombT:komb,kombN:L,svar:kanonisk(komb,L)};
+  }
+  return rad;
 }
 // Vilket tal saknas (lucka i en täljare). Heltalssvar = x.
 function radSaknad(t1, n1, op, nLucka, x){
@@ -1129,16 +1173,56 @@ function bladHTML(blad){
       var bokstav = String.fromCharCode(96 + radNummer);
 
       if(rad.typ === 'brakSvar'){
-        var kladd = blad.mellanled
-          ? '<input class="ovn-in bred brak-kladd" inputmode="text" autocomplete="off" placeholder="visa hur du räknar">'
-          : '';
+        // Hjälpare: rättad bråk-cell (täljare/nämnare) med facit i data-svar
+        function gFrac(facitT, facitN){
+          return '<span class="ovn-brak brak-stegfrak">'
+            + '<span class="ovn-brak-taljare"><input class="ovn-in brak-steg-cell" data-svar="' + facitT + '" inputmode="numeric" autocomplete="off"></span>'
+            + '<span class="ovn-brak-strecket"></span>'
+            + '<span class="ovn-brak-namnare"><input class="ovn-in brak-steg-cell" data-svar="' + facitN + '" inputmode="numeric" autocomplete="off"></span>'
+            + '</span>';
+        }
+        // Produkt-bråk i förlängningssteget: (t·f)/(n·f) — eleven skriver de fyra talen
+        function gProd(t, f, n){
+          return '<span class="ovn-brak brak-stegfrak brak-prodfrak">'
+            + '<span class="ovn-brak-taljare"><input class="ovn-in brak-steg-cell smal" data-svar="' + t + '" inputmode="numeric" autocomplete="off">'
+            + '<span class="prod-gng">·</span>'
+            + '<input class="ovn-in brak-steg-cell smal" data-svar="' + f + '" inputmode="numeric" autocomplete="off"></span>'
+            + '<span class="ovn-brak-strecket"></span>'
+            + '<span class="ovn-brak-namnare"><input class="ovn-in brak-steg-cell smal" data-svar="' + n + '" inputmode="numeric" autocomplete="off">'
+            + '<span class="prod-gng">·</span>'
+            + '<input class="ovn-in brak-steg-cell smal" data-svar="' + f + '" inputmode="numeric" autocomplete="off"></span>'
+            + '</span>';
+        }
+
+        if(rad.steg && blad.mellanled){
+          var s = rad.steg;
+          // svaret: heltal + ev. bråkdel
+          var svarBox = svarBrakHTML(rad.svar);
+          html += '<div class="ovn-brak-rad brak-svar-rad brak-femled" data-rad="' + radNummer + '">';
+          html += '<span class="ovn-label">' + bokstav + ')</span>';
+          // 1. uppgift
+          html += '<span class="femled-grp">' + fracSpan(s.t1,s.n1) + opSpan(s.op) + fracSpan(s.t2,s.n2) + '</span>';
+          html += '<span class="ovn-text femled-eq">=</span>';
+          // 2. förläng: (t1·f1)/(n1·f1) op (t2·f2)/(n2·f2)
+          html += '<span class="femled-grp">' + gProd(s.t1,s.f1,s.n1) + opSpan(s.op) + gProd(s.t2,s.f2,s.n2) + '</span>';
+          html += '<span class="ovn-text femled-eq">=</span>';
+          // 3. samma nämnare: nt1/L op nt2/L
+          html += '<span class="femled-grp">' + gFrac(s.nt1,s.L) + opSpan(s.op) + gFrac(s.nt2,s.L) + '</span>';
+          html += '<span class="ovn-text femled-eq">=</span>';
+          // 4. lägg ihop: kombT/kombN
+          html += '<span class="femled-grp">' + gFrac(s.kombT,s.kombN) + '</span>';
+          html += '<span class="ovn-text femled-eq">=</span>';
+          // 5. svar
+          html += '<span class="femled-grp">' + svarBox + '</span>';
+          html += '</div>';
+          return;
+        }
+
+        // Samma nämnare (eller mellanled av): bara svarsrutan
         if(rad.fraga){
           html += '<div class="brak-fragerad" data-rad="' + radNummer + '">';
           html += '<span class="ovn-label">' + bokstav + ')</span>';
           html += '<span class="brak-fragetext">' + rad.vanster + '</span>';
-          if(blad.mellanled){
-            html += '<span class="brak-svarlabel">Uträkning:</span>' + kladd;
-          }
           html += '<span class="brak-svarlabel">Svar:</span>';
           html += svarBrakHTML(rad.svar);
           html += '</div>';
@@ -1147,9 +1231,6 @@ function bladHTML(blad){
           html += '<span class="ovn-label">' + bokstav + ')</span>';
           html += rad.vanster;
           html += '<span class="ovn-text" style="margin:0 4px;">=</span>';
-          if(blad.mellanled){
-            html += kladd + '<span class="ovn-text" style="margin:0 4px;">=</span>';
-          }
           html += svarBrakHTML(rad.svar);
           html += '</div>';
         }
@@ -1290,7 +1371,17 @@ function bygg_blad(rotEl, blad){
 
     // 1) Vanliga enstaka svar (hoppa över bråkcellerna)
     inputs.forEach(function(inp){
-      if(inp.classList.contains('brak-cell') || inp.classList.contains('brak-kladd')) return;
+      if(inp.classList.contains('brak-cell') || inp.classList.contains('brak-kladd') || inp.classList.contains('brak-kladd-cell')) return;
+      // Steg-celler (femledad uppställning): rätta och färglägg, men utan inline-markörer
+      if(inp.classList.contains('brak-steg-cell')){
+        inp.classList.remove('correct','wrong','just-checked');
+        var okS = jamforTal(inp.value, parseFloat(inp.dataset.svar));
+        totalt++;
+        if(okS){ ratt++; inp.classList.add('correct','just-checked'); }
+        else { inp.classList.add('wrong','just-checked'); }
+        setTimeout(function(){ inp.classList.remove('just-checked'); }, 500);
+        return;
+      }
       var rad = inp.closest('.ovn-rad, .ovn-brak-rad, .prob-rad') || inp.parentElement;
       rad.querySelectorAll('.ovn-fasit, .ovn-mark').forEach(function(f){ f.remove(); });
       inp.classList.remove('correct','wrong','just-checked');
@@ -1524,6 +1615,22 @@ function genG6(){ // subtraheras med base
   var tgtT = gRand(1, 6), tgtN = gPick([2,3,4,6,8,12]);
   return radFragaSub(base[0], base[1], {t: tgtT, n: tgtN});
 }
+// Generera flera uppgifter men undvik att samma svar upprepas för ofta.
+// genFn() -> rad med rad.svar = {hel,t,n}. maxLika = hur många gånger ett svar får återkomma.
+function unika(genFn, antal, maxLika){
+  maxLika = maxLika || 1;
+  var rader = [], rakning = {}, forsok = 0;
+  while(rader.length < antal && forsok < 200){
+    forsok++;
+    var r = genFn();
+    var nyckel = r.svar ? mixedText(r.svar) : ('r' + rader.length);
+    if((rakning[nyckel] || 0) >= maxLika) continue;
+    rakning[nyckel] = (rakning[nyckel] || 0) + 1;
+    rader.push(r);
+  }
+  while(rader.length < antal) rader.push(genFn()); // säkerhetsnät
+  return rader;
+}
 function GEN_FORLANG1(){
   return {
     titel: 'Addition och subtraktion med bråk – nytt blad',
@@ -1533,12 +1640,12 @@ function GEN_FORLANG1(){
     mellanled: true,
     keypadOps: ['+','−','/','='],
     grupper: [
-      {rubrik:'Beräkna', rader:[genG1(),genG1(),genG1(),genG1()]},
-      {rubrik:'Beräkna – svara i enklaste form', rader:[genG2(),genG2(),genG2(),genG2()]},
-      {rubrik:'Beräkna – förläng en nämnare', rader:[genG3(),genG3(),genG3(),genG3()]},
-      {rubrik:'Vilket tal saknas för att likheten ska stämma?', rader:[genG4(),genG4(),genG4()]},
-      {rubrik:'Vilket tal ska adderas?', rader:[genG5(),genG5(),genG5()]},
-      {rubrik:'Vilket tal ska subtraheras?', rader:[genG6(),genG6(),genG6()]}
+      {rubrik:'Beräkna', rader: unika(genG1, 4, 1)},
+      {rubrik:'Beräkna – svara i enklaste form', rader: unika(genG2, 4, 1)},
+      {rubrik:'Beräkna – förläng en nämnare', rader: unika(genG3, 4, 1)},
+      {rubrik:'Vilket tal saknas för att likheten ska stämma?', rader: unika(genG4, 3, 2)},
+      {rubrik:'Vilket tal ska adderas?', rader: unika(genG5, 3, 1)},
+      {rubrik:'Vilket tal ska subtraheras?', rader: unika(genG6, 3, 1)}
     ]
   };
 }
@@ -1554,6 +1661,7 @@ function GRUND_FORLANG2_N1(){
   return {
     titel: 'Förläng båda nämnarna – nivå 1',
     intro: 'Förläng båda bråken till samma nämnare innan du räknar. Svara i enklaste form.',
+    mellanled: true,
     grupper: [
       {rubrik:'Beräkna med bråk', rader:[
         radTermer([F(3,4),T('+',1,3)]),
@@ -1575,6 +1683,7 @@ function GRUND_FORLANG2_N2(){
   return {
     titel: 'Förläng båda nämnarna – nivå 2',
     intro: 'Svårare nämnare och uppgifter med tre termer. Räkna ett steg i taget och svara i enklaste form.',
+    mellanled: true,
     grupper: [
       {rubrik:'Beräkna med bråk', rader:[
         radTermer([F(4,9),T('+',5,6)]),
@@ -1625,9 +1734,10 @@ function GEN_FORLANG2_N1(){
   return {
     titel: 'Förläng båda nämnarna – nivå 1 (nytt blad)',
     intro: 'Förläng båda bråken till samma nämnare. Svara i enklaste form.',
+    mellanled: true,
     grupper: [
-      {rubrik:'Beräkna med bråk', rader:[genTvaTerm(PAR_FB),genTvaTerm(PAR_FB),genTvaTerm(PAR_FB),genTvaTerm(PAR_FB)]},
-      {rubrik:'Beräkna med bråk', rader:[genTvaTerm(PAR_FB),genTvaTerm(PAR_FB),genTvaTerm(PAR_FB),genTvaTerm(PAR_FB)]}
+      {rubrik:'Beräkna med bråk', rader: unika(function(){ return genTvaTerm(PAR_FB); }, 4, 1)},
+      {rubrik:'Beräkna med bråk', rader: unika(function(){ return genTvaTerm(PAR_FB); }, 4, 1)}
     ]
   };
 }
@@ -1635,9 +1745,10 @@ function GEN_FORLANG2_N2(){
   return {
     titel: 'Förläng båda nämnarna – nivå 2 (nytt blad)',
     intro: 'Svårare nämnare och tre termer. Svara i enklaste form.',
+    mellanled: true,
     grupper: [
-      {rubrik:'Beräkna med bråk', rader:[genTvaTerm(PAR_FB_S),genTvaTerm(PAR_FB_S),genTvaTerm(PAR_FB_S)]},
-      {rubrik:'Beräkna med bråk', rader:[genTreTerm(),genTreTerm(),genTreTerm(),genTreTerm()]}
+      {rubrik:'Beräkna med bråk', rader: unika(function(){ return genTvaTerm(PAR_FB_S); }, 3, 1)},
+      {rubrik:'Beräkna med bråk', rader: unika(genTreTerm, 4, 1)}
     ]
   };
 }
