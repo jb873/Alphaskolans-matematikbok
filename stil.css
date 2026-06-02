@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Matematik · Årskurs 7</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&display=swap" rel="stylesheet">
-<style>
 /* ============================================================
    MATEMATIK · GEMENSAM STIL FÖR NAVIGATIONSSIDORNA
    Delas av index.html, ak*.html och omrade-*.html
@@ -306,6 +298,105 @@ h1.hero-title em{font-style:italic;color:var(--gold-lt);}
   .train-cta{width:100%;text-align:center;}
 }
 
+/* ── FLIKRAD (delkapitlets undersidor) ── */
+.tab-row{
+  max-width:920px;margin:0 auto;padding:28px 28px 0;
+  display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;
+  border-bottom:1px solid var(--paper-dk);
+  -webkit-overflow-scrolling:touch;
+}
+.tab-btn{
+  flex-shrink:0;
+  font-family:var(--cinzel);font-size:12px;font-weight:500;letter-spacing:.06em;
+  color:var(--ink-faint);background:none;border:none;cursor:pointer;
+  padding:13px 17px;border-bottom:3px solid transparent;
+  transition:color .15s, border-color .15s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--ink);}
+.tab-btn.is-active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-panel{display:none;animation:fadeUp .35s ease both;}
+.tab-panel.is-active{display:block;}
+
+/* ── FÖRELÄSNINGSKORT ── */
+.lecture-list{
+  max-width:920px;margin:0 auto;padding:24px 28px 8px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.lecture-card{
+  display:flex;align-items:center;gap:18px;
+  background:var(--paper-lt);border:1px solid var(--paper-dk);
+  border-radius:6px;padding:16px 20px;cursor:pointer;
+  transition:box-shadow .15s, transform .15s, border-color .15s;
+}
+.lecture-card:hover{
+  box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateX(3px);
+  border-color:rgba(0,0,0,.12);
+}
+.lecture-card.is-playing{
+  border-color:var(--blue);box-shadow:0 4px 18px rgba(27,75,138,.14);
+}
+.lecture-thumb{
+  position:relative;width:108px;height:64px;flex-shrink:0;
+  border-radius:5px;overflow:hidden;background:var(--navy);
+}
+.lecture-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.lecture-play{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(15,30,46,.32);transition:background .15s;
+}
+.lecture-card:hover .lecture-play{background:rgba(15,30,46,.12);}
+.lecture-play span{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.92);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--navy);padding-left:3px;
+}
+.lecture-meta{flex:1;}
+.lecture-title{
+  font-family:var(--serif);font-size:20px;font-weight:500;
+  letter-spacing:-.01em;color:var(--ink);margin-bottom:3px;
+}
+.lecture-tag{
+  font-family:var(--cinzel);font-size:10px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);
+}
+.lecture-state{
+  font-family:var(--cinzel);font-size:11px;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--blue);
+  flex-shrink:0;
+}
+/* Inbäddad spelare som fälls ut under kortet */
+.lecture-player{
+  max-width:920px;margin:4px auto 0;padding:0 28px;
+  display:none;
+}
+.lecture-player.is-open{display:block;animation:fadeUp .3s ease both;}
+.lecture-frame{
+  position:relative;width:100%;height:0;
+  padding-bottom:56.25%; /* 16:9 – fungerar i alla webbläsare */
+  border-radius:8px;overflow:hidden;background:#000;
+  border:1px solid var(--paper-dk);
+}
+.lecture-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+.lecture-yt-link{
+  display:inline-block;margin-top:11px;
+  font-family:var(--cinzel);font-size:11px;font-weight:500;
+  letter-spacing:.06em;color:var(--ink-faint);text-decoration:none;
+  transition:color .15s;
+}
+.lecture-yt-link:hover{color:var(--blue);}
+
+/* ── ÖVNINGSPLATSHÅLLARE I FLIK ── */
+.tab-placeholder{
+  max-width:920px;margin:0 auto;padding:24px 28px;
+}
+
+@media(max-width:600px){
+  .tab-row{padding:20px 16px 0;}
+  .lecture-card{flex-wrap:wrap;}
+  .lecture-thumb{width:92px;height:54px;}
+}
+
 /* ── FOOTER ── */
 footer{
   border-top:1px solid var(--paper-dk);padding:26px 28px;
@@ -327,93 +418,3 @@ footer span{font-family:var(--cinzel);font-size:11px;letter-spacing:.1em}
   .topnav{padding:0 16px}
   .nav-crumbs{display:none}
 }
-</style>
-</head>
-<body>
-
-<nav class="topnav">
-  <div class="nav-brand">Matematik<span class="nav-sep">·</span><span>Åk 7</span></div>
-  <div class="nav-crumbs">
-    <a href="index.html">Matematikbok</a>
-    <span class="crumb-sep">›</span>
-    <span class="crumb-current">Årskurs 7</span>
-  </div>
-</nav>
-
-<header class="hero">
-  <div class="hero-eyebrow">Årskurs 7</div>
-  <h1 class="hero-title">Matematik i <em>årskurs 7</em></h1>
-  <p class="hero-desc">Jobba med läsårets kapitel eller gå direkt till metod- och färdighetsträningen när du repeterar eller pluggar till prov.</p>
-  <a class="hero-back" href="index.html">← Byt årskurs</a>
-</header>
-
-<div class="section-label">Repetera och plugga till prov</div>
-
-<div class="train-banner">
-  <a class="train-card" href="ak7-k1-ram.html">
-    <div class="train-icon">✏️</div>
-    <div class="train-text">
-      <div class="train-eyebrow">Alla metoder · alla räknesätt</div>
-      <div class="train-title">Metod- och färdighetsträning</div>
-      <div class="train-desc">Träna metoderna steg för steg med uppgifter som anpassar sig efter hur det går. Bra när du repeterar, pluggar metoder eller förbereder dig inför prov.</div>
-    </div>
-    <div class="train-cta">Börja träna →</div>
-  </a>
-</div>
-
-<div class="section-label">Läsårets kapitel</div>
-
-<main class="card-grid" id="kapitel-grid"></main>
-
-<footer>
-  <div>Digitalt läromedel i matematik</div>
-  <span>Årskurs 7</span>
-</footer>
-
-<script>
-// Läsårets åtta kapitel i åk 7. status: 'open' | 'soon'
-// typ: 'kapitel' | 'prov' styr färg/badge.
-var KAPITEL = [
-  {nr:1, titel:'Positionssystem och fyra räknesätt', desc:'Positionssystemet och de fyra räknesätten – addition, subtraktion, multiplikation och division.', fil:'ak7-k1.html', typ:'kapitel', status:'open'},
-  {nr:2, titel:'Bråk och räkna med bråk', desc:'Bråkbegreppet, räkna med bråk och att växla mellan bråkform och decimalform.', fil:'ak7-k2.html', typ:'kapitel', status:'open'},
-  {nr:3, titel:'Algebra och ekvationer', desc:'Variabler, uttryck, mönster och att lösa ekvationer.', fil:'ak7-k3.html', typ:'kapitel', status:'open'},
-  {nr:4, titel:'Terminsprov', desc:'Prov på höstterminens kapitel, med repetition och självskattningsmatris.', fil:null, typ:'prov', status:'soon'},
-  {nr:5, titel:'Geometri', desc:'Area, omkrets, vinklar och geometriska former.', fil:null, typ:'kapitel', status:'soon'},
-  {nr:6, titel:'Procent', desc:'Procentbegreppet, beräkningar med procent och samband mellan andel, del och det hela.', fil:null, typ:'kapitel', status:'soon'},
-  {nr:7, titel:'Statistik', desc:'Tabeller, diagram och lägesmått – att samla in, visa och tolka data.', fil:null, typ:'kapitel', status:'soon'},
-  {nr:8, titel:'Läsårsprov', desc:'Prov på hela läsårets kapitel, med repetition och självskattningsmatris.', fil:null, typ:'prov', status:'soon'}
-];
-
-var grid = document.getElementById('kapitel-grid');
-KAPITEL.forEach(function(k){
-  var stripe = k.typ === 'prov' ? 'var(--gold)' : 'var(--blue)';
-  var badge = k.status === 'open'
-    ? '<div class="card-badge open">Öppet</div><div class="card-arrow">›</div>'
-    : '<div class="card-badge ' + (k.typ === 'prov' ? 'prov' : 'soon') + '">'
-        + (k.typ === 'prov' ? 'Prov' : 'Kommer senare') + '</div>';
-  var inner =
-      '<div class="card-stripe" style="background:' + stripe + ';"></div>'
-    + '<div class="card-body">'
-      + '<div class="card-num">Kapitel ' + k.nr + '</div>'
-      + '<div class="card-main">'
-        + '<div class="card-title">' + k.titel + '</div>'
-        + '<div class="card-desc">' + k.desc + '</div>'
-      + '</div>'
-      + badge
-    + '</div>';
-  var el;
-  if(k.status === 'open' && k.fil){
-    el = document.createElement('a');
-    el.className = 'nav-card';
-    el.href = k.fil;
-  } else {
-    el = document.createElement('div');
-    el.className = 'nav-card is-soon';
-  }
-  el.innerHTML = inner;
-  grid.appendChild(el);
-});
-</script>
-
-</body>
-</html>
